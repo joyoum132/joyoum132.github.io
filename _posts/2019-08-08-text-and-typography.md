@@ -7,7 +7,7 @@ tags: [checkstyle, platform-api]
 ---
 
 > platform-api 에 컨벤션이 없어 가독성이 떨어지고 코드를 이해하기 어려워 Checkstyle 플러그인 적용
-{: .prompt-tip }
+{: .prompt-info }
 
 ## Java 에서 주로 사용하는 린트
 - [ ] SonarLint
@@ -26,7 +26,7 @@ tags: [checkstyle, platform-api]
 ## 작업 순서
 >네이버의 코드 포멧 및 validation-rule 적용 <br>
 > <https://github.com/naver/hackday-conventions-java/tree/master/rule-config>
-{: .prompt-tip }
+{: .prompt-info }
 
 #### 1. Code Style 적용
 - rule-config/naver-intellij-formatter.xml 다운로드
