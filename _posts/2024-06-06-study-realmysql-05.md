@@ -203,6 +203,7 @@ UPDATE employees SET hire_date=NOW() WHERE first_name='DK' AND last_name='J'; --
 ### auto-commit 에 대한 정리
 - auto-commit 이 true 일 때 하나의 SQL statement 가 트랜잭션 단위가 되기 때문에 쿼리 실행 후 바로 Commit
 - ❓만약 트랜잭션 내에 Exception 이 발생한다면❓
+  - 트랜잭션의 원자성과 auto-commit 의 개념이 충돌하지 않을까? 하는 의문이 들었음
   ```sql
   #수도코드임
   set auto-commit = true -- auto commit 활성
@@ -223,4 +224,5 @@ UPDATE employees SET hire_date=NOW() WHERE first_name='DK' AND last_name='J'; --
   >
   > A session that has autocommit enabled can <u> perform a multiple-statement transaction by starting it with an explicit START TRANSACTION or BEGIN statement and ending it with a COMMIT or ROLLBACK statement.</u> See Section 13.3.1, “START TRANSACTION, COMMIT, and ROLLBACK Statements”.
   >
-    - 명시적으로 지정된 트랜잭션 구문 내의 multiple-statement 는 하나의 묶음으로 간주 -> 실행 중 예외 발생 시 롤백   
+
+  - 명시적으로 지정된 트랜잭션 구문 내의 multiple-statement 는 하나의 묶음으로 간주 -> 실행 중 예외 발생 시 롤백   
