@@ -204,6 +204,7 @@ UPDATE employees SET hire_date=NOW() WHERE first_name='DK' AND last_name='J'; --
 - auto-commit 이 true 일 때 하나의 SQL statement 가 트랜잭션 단위가 되기 때문에 쿼리 실행 후 바로 Commit
 - ❓만약 트랜잭션 내에 Exception 이 발생한다면❓
   - 트랜잭션의 원자성과 auto-commit 의 개념이 충돌하지 않을까? 하는 의문이 들었음
+  
   ```sql
   #수도코드임
   set auto-commit = true -- auto commit 활성
