@@ -2,8 +2,8 @@
 title: 05. 트랜잭션과 잠금
 description:
 date: 2024-06-06 +0900
-categories: [Team Study, Real MySQL 8.0]
-tags: [transaction, lock, InnoDB]
+categories: [Study, Real MySQL 8.0]
+tags: [Team Study, RealMySQL, transaction, lock, InnoDB]
 ---
 ## [ Before Enter ]
 잠금 : 동시성 제어 <br>
