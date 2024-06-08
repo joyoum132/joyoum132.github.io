@@ -70,6 +70,8 @@ tags: [Team Study, RealMySQL, index]
     - 데이터 파일은 PK 가 key 인 B-tree 구조로 데이터를 저장
     - 데이터 파일에서 B-tree 조회를 한번 더 해야함
 
+---
+
 ### [데이터 쓰기 및 읽기]
 #### 키 추가하기
 - B-tree 내에 적절한 위치 탐색 필요
@@ -98,6 +100,8 @@ tags: [Team Study, RealMySQL, index]
 [(2부) B tree 데이터 삭제 동작 방식을 설명합니다 (DB 인덱스과 관련있는 자료 구조)](https://www.youtube.com/watch?v=H_u28u0usjA&t=1816s)
 
 [(3부) B tree가 왜 DB 인덱스(index)로 사용되는지를 설명합니다](https://www.youtube.com/watch?v=liPSnc6Wzfk&list=PLcXyemr8ZeoREWGhhZi5FZs6cvymjIBVe&index=28)
+
+---
 
 ### [⭐인덱스에 영향을 미치는 요소]
 #### 키 값의 크기
