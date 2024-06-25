@@ -1,5 +1,5 @@
 ---
-title: 06. 인덱스(3)
+title: 08. 인덱스(3)
 description: MySQL 의 기타 인덱스와 알고리즘
 date: 2024-06-18 +0900
 categories: [Study, Real MySQL 8.0]

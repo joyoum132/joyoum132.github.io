@@ -1,5 +1,5 @@
 ---
-title: 06. 인덱스(1)
+title: 08. 인덱스(1)
 description: 인덱스 특징과 B-tree 
 date: 2024-06-08 +0900
 categories: [Study, Real MySQL 8.0]
