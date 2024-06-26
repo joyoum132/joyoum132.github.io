@@ -165,8 +165,7 @@ select * from reservation;
 ---
 ## <b>GROUP BY 처리 </b>
 
-### 인덱스를 사용하는 경우
-#### 인덱스 스캔 사용 (타이트 인덱스 스캔)
+### [ 인덱스 스캔 사용 (타이트 인덱스 스캔) ]
 - 조건
   - 드라이빙 테이블에 속한 컬럼만을 이용해 그루핑
   - 해당 컬럼으로 인덱스가 존재
@@ -175,16 +174,105 @@ select * from reservation;
   - ?? 임시테이블을 사용해도?
   - 그럼 뭐라고 뜨나 -> 인덱스 스캔으로 되나보다.
 
-#### 루스 인덱스 스캔 사용
+### [ 루스 인덱스 스캔 사용 ]
 - 레인지 중 필요한 레코드만 읽는 스캔 방식
 - 실행 계획에 'Using index for group-by'
 - 옵티마이저가 group by 와 where 을 적절히 섞어 where A and B 와 유사한 방식으로 쿼리를 수행할 수 있도록 함
 - 단일 테이블에 대한 group by 에서만 사용
 - 프리픽스 인덱스 (컬럼의 앞쪽 일부만으로 생성된 인덱스) 에서는 사용 불가능
-- 인덱스 스캔을 사용할 때는 중복도가 낮을수록 유리한 반면, 중복도가 높을수록 유리 
-### 인덱스를 사용하지 않는 경우
+- 인덱스 스캔을 사용할 때는 중복도가 낮을수록 유리한 반면, 중복도가 높을수록 유리
+
+### [ 인덱스를 사용하지 않는 경우 ]
 - 인덱스를 사용하지 못하는 경우
 - 실행 계획에 'Using Temporary' 표시
 - 그러나 'Using Filesort' 는 없다!
   - 8.0 이하 버전에서는 group by 키로 정렬까지도 해주었지만 (그래서 filesort 표시) 버전업 이후 묵시적인 정렬을 하지 않기 때문
   - 쿼리에 order by 가 있다면 'Using Filesort' 도 표시
+
+<br>
+
+---
+
+## <b>Distinct 처리</b>
+- 집합함수와 사용하는 경우, 아닌 경우가 다르게 동작
+
+### [ 평문에 distinct 사용 ]
+- group by 와 동일하게 동작
+- 특히 8.0 부터는 group by 절에 대한 자동 정렬 기능이 없기 때문에 내부 동작 방식, 결과가 같음
+- 조회하는 모든 컬럼의 조합이 유니크한 결과만을 리턴
+  - distinct 바로 뒤의 컬럼만 중복제거하는것이 아님!
+```sql
+-- 둘의 결과는 같고, 옵티마이저는 괄호를 없애버림
+select distinct first_name, last_name from user;
+select distinct (first_name), last_name from user;
+```
+
+### [ 집합 함수와 distinct 사용 ]
+- distinct 키워드 바로 다음 컬럼만 유니크 검사
+- 유니크 검사를 위해 임시 테이블 사용 (실행계획에 Using Temporary 가 보이지는 않더라도 임시 테이블을 사용함)
+
+```sql
+-- 임시테이블 1개
+select count(distinct s.salary) from employees e, salaries s join e.emp_no = s.emp_no where e.emp_no between 1001 and 1100;
+
+-- 임시테이블 2개
+select count(distinct s.salary), count(distinct e.last_name)  from employees e, salaries s join e.emp_no = s.emp_no where e.emp_no between 1001 and 1100;
+
+-- 인덱스가 있는 경우 레인지 스캔 or 인덱스 풀 스캔하여 임시 테이블 없이 사용
+select count(distinct emp_no) from employees;
+select count(distinct emp_no) from dept_emp group by dept_no;
+```
+
+<br>
+
+---
+## <b> 내부 임시테이블 사용 </b>
+- 내부 임시 테이블이란 MySQL 엔진이 쿼리를 수행하는 도중 중간 결과를 저장하기 위해 사용
+  - 대표적으로 정렬, 그루핑하는 경우
+- 메모리에 생성됐다가 크기가 커지만 디스크로 옮겨짐
+- 다른 세션이나 쿼리에서 볼 수 없고, 쿼리 실행 도중에만 존재했다가 사라짐
+- `create temporary table` 명령으로 만든 임시 테이블과 다름
+
+### [ 메모리 / 디스크 임시 테이블 ]
+<b> 버전마다 사용 엔진이 다름 </b>
+- 8.0 이전
+  - 메모리 → MEMORY 스토리지 엔진 (단점: 가변 길이 타입 미지원으로 저장 컬럼의 최대 길이 기준으로 컬럼 생성)
+    - `temp_table_size`
+    - `max_heap_table_size`
+  - 디스크 → MyISAM 스토리지 엔진 (단점: 트랜잭션 미지원)
+- 8.0 이상
+  - 메모리 → TempTable (가변길이 지원)
+    - `temptable_max_ram`
+  - 디스크 → InnoDB (트랜잭션 지원) 또는 TempTable 의 MMAP 파일 버전
+    - `temptable_use_mmax`
+    - default 는 TempTable 의 MMAP 파일 버전
+    - TempTable 에서 InnoDB 로 전환하는 것 보다 오버헤드가 적음
+
+### [ 임시 테이블이 필요한 쿼리 ]
+- order by, group by 에 명시된 컬럼이 다른 경우
+- order by, group by 에 명시된 컬럼이 조인 순서상 첫 번째 테이블이 아닌 경우
+- distinct 와 order by 가 동시에 쿼리에 존재하는 경우 또는 distinct 가 인덱스로 처리되지 못하는 경우
+- union 이나 union distinct 가 사용된 쿼리 (select_type 컬럼이 union_result 인 경우)
+- 쿼리의 실행 계획에서 select_type 이 drived 인 쿼리
+
+### [ 임시 테이블이 디스크에 바로 생성되는 경우 ]
+- union 이나 union all 에서 select 되는 컬럼 중에서 길이가 512 바이트 이상인 크기의 칼럼이 있는 경우
+- group by 나 distinct 컬럼에서 512 바이트 이상인 크기의 컬럼이 있는 경우
+- 메모리 임시 테이블의 크기가 tmp_table_size 또는 max_heap_table_size 시스템 변수보다 크거나 temptable_max_ram 사이즈보다 큰 경우
+
+### [ 임시 테이블 관련 상태 변수 ]
+- 임시 테이블을 사용하더라도 'Using Temporary' 가 있을 수도, 없을 수도 있음
+- 있더라도 메모리/디스크 어디서 처리됐는지 알 수 없고
+- 몇개의 임시 테이블이 있었는지 알 수 없음
+```sql
+-- 다른 쿼리 결과와 섞이지 않도록 세션 초기화
+flush status;
+      
+-- 임시 테이블 관련 정보를 확인할 쿼리 실행
+select .... ;
+
+-- 임시 테이블 관련 상태 조회
+show session status like 'created_tmp%';
+```
+- created_tmp_tables : 내부 임시 테이블 개수 누적 값(메모리, 디스크 구분 X)
+- created_tmp_disk_tables : 디스크 내부 임시 테이블 개수 누적
