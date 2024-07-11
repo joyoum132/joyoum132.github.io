@@ -179,16 +179,15 @@ select * from reservation;
   - 해당 컬럼으로 인덱스가 존재
 - 그룹화하는 중간에 데이터 저장을 위한 임시 테이블이 필요할 수 있음
 - 실행 계획에 'Using Index group-by', 'Using Temporary', 'Using Filesort' 표시 X
-  - ?? 임시테이블을 사용해도?
-  - 그럼 뭐라고 뜨나 -> 인덱스 스캔으로 되나보다.
 
 ### [ 루스 인덱스 스캔 사용 ]
-- 레인지 중 필요한 레코드만 읽는 스캔 방식
+- range 중 필요한 레코드만 읽는 스캔 방식
 - 실행 계획에 'Using index for group-by'
 - 옵티마이저가 group by 와 where 을 적절히 섞어 where A and B 와 유사한 방식으로 쿼리를 수행할 수 있도록 함
 - 단일 테이블에 대한 group by 에서만 사용
 - 프리픽스 인덱스 (컬럼의 앞쪽 일부만으로 생성된 인덱스) 에서는 사용 불가능
 - 인덱스 스캔을 사용할 때는 중복도가 낮을수록 유리한 반면, 중복도가 높을수록 유리
+  - 많이 건너뛸 수 있으니까
 
 ### [ 인덱스를 사용하지 않는 경우 ]
 - 인덱스를 사용하지 못하는 경우
@@ -249,7 +248,7 @@ select count(distinct emp_no) from dept_emp group by dept_no;
     - `max_heap_table_size`
   - 디스크 → MyISAM 스토리지 엔진 (단점: 트랜잭션 미지원)
 - 8.0 이상
-  - 메모리 → TempTable (가변길이 지원)
+  - 메모리 → TempTable (가변길이 지원, default) or MEMORY 스토리지 엔진
     - `temptable_max_ram`
   - 디스크 → InnoDB (트랜잭션 지원) 또는 TempTable 의 MMAP 파일 버전
     - `temptable_use_mmax`
@@ -257,6 +256,7 @@ select count(distinct emp_no) from dept_emp group by dept_no;
     - TempTable 에서 InnoDB 로 전환하는 것 보다 오버헤드가 적음
 
 ### [ 임시 테이블이 필요한 쿼리 ]
+<b>extra 컬럼에 Using Temporary</b>
 - order by, group by 에 명시된 컬럼이 다른 경우
 - order by, group by 에 명시된 컬럼이 조인 순서상 첫 번째 테이블이 아닌 경우
 - distinct 와 order by 가 동시에 쿼리에 존재하는 경우 또는 distinct 가 인덱스로 처리되지 못하는 경우
@@ -272,6 +272,7 @@ select count(distinct emp_no) from dept_emp group by dept_no;
 - 임시 테이블을 사용하더라도 'Using Temporary' 가 있을 수도, 없을 수도 있음
 - 있더라도 메모리/디스크 어디서 처리됐는지 알 수 없고
 - 몇개의 임시 테이블이 있었는지 알 수 없음
+
 ```sql
 -- 다른 쿼리 결과와 섞이지 않도록 세션 초기화
 flush status;
