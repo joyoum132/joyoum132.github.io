@@ -1,5 +1,5 @@
 ---
-title: 09. 옵티마이저와 힌트 - 스위치 옵션
+title: 09. 옵티마이저와 힌트 - 고급최적화 1
 description: 옵티마이저의 스위치 옵션의 종류
 date: 2024-07-02 +0900
 categories: [Study, Real MySQL 8.0]
@@ -70,3 +70,94 @@ create table user
   - index_merge_intersection
   - index_merge_sort_union
   - index_merge_union
+
+## <b>15. 컨디션 팬아웃(condition_fanout_filter)</b>
+- 실행계획에 사용하는 인덱스 정보 외에 추가 정보를 활용해서 실행계획을 분석하는 것
+  - where 조건절에 사용된 컬럼에 대해 인덱스가 있는 경우
+  - where 조건절에 사용된 컬럼에 대해 히스토그램이 존재하는 경우
+  ```sql
+  select * from employees e
+  inner join salaries s on s.emp_no=e.emp_no
+  where e.first_name='MATT' 
+  and e.hire_date between '2023-01-01' and '2023-12-31';
+  ```
+  - first_name, hire_date 인덱스가 각각 존재할 때,
+  - 최종적으로 선택하는 인덱스는 first_name 이더라도, 나머지 정보 분석에 hire_date 인덱스를 사용하는 것
+
+## <b>16. 파생 테이블 머지(drived_merge)</b>
+- from 절의 서브 쿼리를 외부 쿼리와 병합해서 일반 쿼리로 변환하여 실행계획 분석
+- 서브 쿼리 결과를 임시 테이블에 저장하고, 임시 테이블의 결과를 외부 테이블과 비교하는 기존 방식을 개선함
+- MySQL 5.7 부터 최적화된 기능
+- 실행 계획의 type 에 `index_merge` 라고 표시됨
+- 옵티마이저가 파생 테이블 머지하지 못하는 경우
+  - SUM(), MIN(), MAX() 와 같은 집계 함수와 윈도우 함수가 사용된 서브 쿼리
+  - distinct 가 사용된 서브쿼리
+  - group by, having 절이 사용된 서브쿼리
+  - limit 이 사용된 서브쿼리
+  - union, union all 이 사용된 서브쿼리
+  - select 절에 사용된 서브쿼리
+  - 값이 변경되는 사용자 변수가 사용된 서브쿼리
+
+## <b>17. 인비저블 인덱스(use_invisible_indexes) </b>
+- 옵티마이저가 invisible 상태의 인덱스도 실행계획에 사용할 수 있도록 설정
+- set optimizer_switch='use_invisible_indexes=ON'
+
+> 인덱스의 가용 상태 <br>
+> MySQL 8.0 부터는 인덱스 비활성 상태 지정이 가능해짐(삭제하지 않음)
+> alter table ... alter index ... visible | invisible
+> 인덱스를 가용 상태를 invisible 로 설정하면 실행계획을 분석할 때 해당 인덱스를 검토하지 않음
+{: .prompt-info}
+
+##<b>18. 스킵 스캔(skip_scan)</b>
+- 멀티 컬럼 인덱스에서 첫번째 컬럼을 where 조건에 사용하지 않더라도 해당 인덱스를 사용할 수 있게 함
+  - 내부적으로 선행 컬럼에 대한 조건을 추가해줌
+  - 선행 컬럼이 소수의 유니크한 값을 가질 때만 사용함
+- 활성 여부 제어
+  - 현재 세션에서 활성화 / 비활성화
+  - 특정 테이블에 대해 스킵 스캔 사용을 위한 힌트 사용
+  - 특정 테이블과 인덱스에 대해 스킵 스캔 사용을 위한 힌트 사용
+  - 특정 테이블에 대해 스킵 스캔 사용하지 않도록 힌트 사용
+
+## <b>19. 해시 조인</b>
+- MySQL 8.0.18 부터 지원한 조인 방식, 8.0.20 부터는 블록 네스티드 루프 대신에 사용 
+- Nest Loop 조인이 최고 응답 속도 전력에 적합하다면, 해시 조인은 최고 스루풋 전략에 적합함
+  - Nest Loop 방식은 첫번째 레코드를 빠르게 찾는 대신, 마지막 레코드까지 찾아내는데에 오래걸린다
+  - 해시 조인은 첫번째 레코드를 찾는 속도는 느리지만, 마지막 레코드까지 찾는데에는 빠르다
+- 범용 RDBMS (OLTP) 은 빠른 응답 속도가 더 중요하기 때문에 Nested Loop 방식이 적합하지 않은 경우 차선책으로써 사용
+- 조인 과정
+  - 빌드 단계(Build-phase)와 프로브 단계(Probe-phase) 로 구분
+  - 빌드 단계
+    - 조인 테이블 중 레코드가 적은 테이블을 대상으로 해시테이블 생성
+  - 프로브 단계
+    - 나머지 테이블 레코드를 읽어 메모리에 만들어진 해시 테이블과 비교하여 조인 결과 생성
+- 메모리에 해시 테이블을 생성하는 과정에서 조인 버퍼 크기를 초과하면?
+  - 빌드 단계에서 조인 버퍼 사이즈만큼만 해시 테이블을 생성하고, 나머지 레코드는 청크해서 디스크에 저장 (빌드 테이블 청크)
+  - 해시 테이블과 나머지 테이블(프로브 테이블)을 비교하며 1차(n차) 조인 결과를 생성하고
+  - 각 차수 별 읽은 프로브 테이블의 레코드를 모아 디스크에 저장 (프로브 테이블 청크)
+- 옵티마이저는 해시 테이블의 청크 여부에 따라 클래식 해시 조인, 그레이스 해시 조인 알고리즘 적용
+
+## <b>20. 인덱스 정렬 선호(prefer_ordering_index)</b>
+- 옵티마이저가 실행계획을 분석할 때 실수하는 경우가 있음
+- order by, group by 절에 사용 가능한 인덱스가 있는 경우 해당 인덱스의 가중치를 높이 설정하기도 함
+```sql
+select * 
+from employees 
+where hire_date between '2023-01-01' and '2023-12-31'
+order by emp_no;
+```
+- 위의 예제에서 `hire_date` 컬럼으로 만들어진 인덱스가 있더라도, 프라이머리키인 emp_no 인덱스를 사용할 수 있음
+  - 테이블 풀 스캔 + hire_date 를 필터링 조건으로 사용 -> Bad!!
+  - 옵티마이저의 실수가 잦다면
+    - 8.0.20 이하 : `IGNORE INDEX`
+    ```sql
+    select *
+    from employees
+    where hire_date between '2023-01-01' and '2023-12-31' ignore index(클러스터링 인덱스 이름 )
+    order by emp_no;
+    ```
+    - 8.0.21 이상 : 현재 커넥션에서 또는 쿼리에서 prefer_order_index 옵션을 끔
+    ```sql
+    set session optimizer_switch='prefer_order_index=OFF'
+    
+    select /* set_var(optimizer_switch='prefer_order_index=OFF') */
+    ```
