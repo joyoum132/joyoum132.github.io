@@ -149,6 +149,7 @@ order by emp_no;
   - 테이블 풀 스캔 + hire_date 를 필터링 조건으로 사용 -> Bad!!
   - 옵티마이저의 실수가 잦다면
     - 8.0.20 이하 : `IGNORE INDEX`
+    
     ```sql
     select *
     from employees
@@ -156,6 +157,7 @@ order by emp_no;
     order by emp_no;
     ```
     - 8.0.21 이상 : 현재 커넥션에서 또는 쿼리에서 prefer_order_index 옵션을 끔
+    
     ```sql
     set session optimizer_switch='prefer_order_index=OFF'
     

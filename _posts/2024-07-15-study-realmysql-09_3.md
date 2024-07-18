@@ -10,6 +10,12 @@ tags: [Team Study, RealMySQL, optimizer]
 - MySQL 5.0 이하의 버전에서 사용하던 알고리즘
 - from 절의 테이블에 대한 조합으로 실행계획을 분석하고 가장 최적 조합 1개를 찾음
 - n개의 테이블에 대해 n! 번의 방법을 검색 (시간 소모가 큼)
+  - 아래와 같은 경우에 (t1, t2), (t1, t3), (t2, t1), (t2, t3), (t3, t1), (t3, t2) 순서로 조인했을 때의 실행계획을 전부 분석하고 가장 최적의 실행계획을 선택함
+    ```sql
+    select *
+    from t1, t2, t3...
+    where..
+    ```
 
 ## <b>Greedy 검색 알고리즘</b>
 - optimizer_search_depth 로 지정한 갯수 만큼의 테이블 조합을 생성한 뒤에 

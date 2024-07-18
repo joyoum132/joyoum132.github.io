@@ -1,6 +1,6 @@
 ---
 title: 09. 옵티마이저와 힌트 - 고급최적화 3
-description: 옵티마이저의 쿼리 힌트
+description: 옵티마이저의 쿼리 힌트 - 인덱스 힌트와 쿼리 힌트
 date: 2024-07-15 +0900
 categories: [Study, Real MySQL 8.0]
 tags: [Team Study, RealMySQL, optimizer]
@@ -46,7 +46,7 @@ tags: [Team Study, RealMySQL, optimizer]
 1. use index
 - 특정 테이블의 인덱스 사용을 권장
 - 옵티마이저는 주로 힌트의 인덱스를 사용하지만 항상은 아님
-2force index
+2. force index
 - use index 보다 강한 권장
 - force 를 주더라도 옵티마이저가 항상 사용하는건 아님
 - 대부분의 경우 use index 로 충분함
@@ -120,7 +120,8 @@ tags: [Team Study, RealMySQL, optimizer]
   
 ### [ SEMI_JOIN / NO_SEMI_JOIN ]
 <b> 쿼리 블록 </b><br>
-- table pull-out 최적화 전략은 세미 조인 전략 중 가장 좋기때문에, 나머지 최적화 세미 조인 전략들 중에 우회하는 용도로 사용할 수 있음
+- table pull-out 최적화 전략은 세미 조인 전략 중 가장 좋기때문에 해당 방식을 사용하도록 하는 힌트는 없음
+- 나머지 최적화 세미 조인 전략들 중에 우회하는 용도로 사용할 수 있음
 - 외부 쿼리가 아닌 서브쿼리에 명시해야 함
 
 1. 쿼리 블록 이름을 사용하는 방식
@@ -148,11 +149,13 @@ tags: [Team Study, RealMySQL, optimizer]
   - /* SUBQUERY(INTOEXISTS) */
   - /* SUBQUERY(MATERIALIZATION) */  
 
-### [ BNL / NO_BNL / HASHJOIN / NO_HASHJOIN ] 
+### [ BNL / NO_BNL / HASHJOIN / NO_HASHJOIN ]
+<b> 쿼리 블록, 테이블 </b><br>
 - BNL / NO_BNL : 이름과 달리 해시조인 사용을 유도하는 힌트
 - HASHJOIN / NO_HASHJOIN : 8.0.18 버전에서만 유효
 
 ### [ JOIN_FIXED_ORDER, JOIN_ORDER, JOIN_PREFIX, JOIN_SUFFIX ]
+<b> 쿼리 블록 </b><br>
 - STRAIGHT_JOIN 은 from 절의 모든 테이블의 순서를 고정해버리기 때문에 일부만 강제하기 위한 다른 힌트들도 필요함
 - JOIN_FIXED_ORDER
   - STRAIGHT_JOIN 와 동일
@@ -164,21 +167,25 @@ tags: [Team Study, RealMySQL, optimizer]
   - 드리븐 테이블만 강제
 
 ### [ MERGE, NO_MERGE ]
+<b> 테이블 </b><br>
 - from 절의 서브쿼리 실행시 항상 내부 임시 테이블을 생성함
 - 옵티마이저는 내부 임시 테이블에 사용되는 추가적인 메모리 소모를 줄이기 위해 from 절의 서브쿼리를 외부 쿼리와 병합(join 처럼 동작하게) 하는 최적화를 진행함
 
 ### [ INDEX_MERGE, NO_INDEX_MERGE ]
+<b> 테이블, 인덱스 </b><br>
 - 대체로 하나의 쿼리에 하나의 인덱스를 사용하지만
 - 하나의 인덱스로 검색 범위를 좁히지 못한다면 다른 인덱스를 함께 사용하기도 함
 - 상황마다 두개 이상의 인덱스를 사용하는것이 성능 개선에 도움이 되기도하고 오히려 성능이 나빠지기도 함
 
 ### [ NO_ICP ]
+<b> 테이블, 인덱스 </b><br>
 - 인덱스 컨디션 푸시다운 최적화는 사용 가능하다면 항상 성능 향상에 도움이 됨
   - 그래서 옵티마이저도 사용 가능하다면 항상 사용하도록 실행계획을 분석
   - 그래서 ICP 힌트 활성화 옵션은 없음!
 - 간혹 인덱스 컨디션 푸시다운의 비용 계산이 잘못될때가 ICP 옵션을 비활성화
 
 ### [ SKIP_SCAN, NO_SKIP_SCAN ]
+<b> 테이블, 인덱스 </b><br>
 - 인덱스 스킵 스캔은 선행 컬럼의 유니크 개수가 적을 때 유리하다
 - 상황에 따라 스킵 스캔 ON, OFF 가능
   ```sql
@@ -188,6 +195,7 @@ tags: [Team Study, RealMySQL, optimizer]
   ```
 
 ### [ INDEX, NO_INDEX ]
+<b> 인덱스 </b><br>
 - 기존의 인덱스 힌트를 대처하는 옵티마이저 힌트가 존재
 - 옵티마이저에서 관련 힌트를 줄 때에는 테이블명 + 인덱스명 함께 명시
 
