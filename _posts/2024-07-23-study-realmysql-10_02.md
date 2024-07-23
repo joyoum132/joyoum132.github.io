@@ -1,5 +1,5 @@
 ---
-title: 10. 실행계획 - 실행 계획 분석
+title: 10. 실행계획 - 실행 계획 분석 1
 description: 실행 계획 테이블의 칼럼 이해하기 (id, select_type, table, partitions)
 date: 2024-07-23 +0900
 categories: [Study, Real MySQL 8.0]
