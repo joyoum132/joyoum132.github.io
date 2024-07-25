@@ -47,3 +47,31 @@ explain select * from dept_emp where detp_no='d0004';
 #### 6. ref_or_nll
 - ref 접근 방식과 동일함
 - null 비교 추가
+
+#### 7. unique_subquery
+- in 조건에 select 문을 사용한 경우, 해당 절에 중복값이 없을 때
+
+#### 8. index_subquery
+- in 조건에 select 절 또는 상수값이 올 때 중복 제거가 필요한 경우
+- unique_subquery : in 절의 변수에 중복 값이 없는 경우
+
+#### 9. range
+- 인덱스 레인지 스캔
+- const, ref, range 를 묶어서 인덱스 레인지 스캔이라고 부르기도 함
+
+#### 10. index_merge
+- 하나 이상의 인덱스를 사용한 경우
+- 여러 인덱스를 읽어야 하기때문에 range 보다 성능이 떨어지고
+- 전문 검색 인덱스와 함께 사용 불가
+- 두개 이상의 인덱스 결과를 합치기 두 결과의 교집합, 합집합, 중복 제거 등의 부가 작업이 필요
+
+#### 11. index
+- 인덱스 풀 스캔
+- range, const, ref 사용 불가능 && 커버링 인덱스로 처리 가능
+- range, const, ref 사용 불가능 && 인덱스로 정렬 또는 그루핑 가능한 경우
+
+#### 12. all
+- 풀 테이블 스캔
+- 리드 어헤드 기능으로 연속된 페이지를 몇 번 읽은 후에는 백그라운드 스레드에서 처리함
+  - `innodb_read_ahead_threshold`
+  - `innodb_random_ahead_threshold`
