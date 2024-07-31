@@ -84,6 +84,45 @@ where e2.emp_no > e1.emp_no
   - 순번은 `show create table employees` 에 출력된 순서
 - 이 경우 type 에 ALL 이 표시되는데, 만약 인덱스가 도움이 안된다면 테이블 풀 스캔을 하기 때문임
 
+#### 16. Recursive
+- WITH 구문으로 재귀 쿼리를 작성하는 경우
+- WITH 로 작성한 CTE 가 재귀로 동작하는 경우에만 표시
+
+#### 18. Select tables optimized away
+- select 절에 min(), max() 를 사용하거나
+- group by 로 min(), max() 조회하는 쿼리가 인덱스를 오름/내림차순으로 1건만 읽는 경우
+- 레인지 스캔 후, 해당 범위의 가장 첫/마지막 값만 읽는 경우를 의미함
+
+#### 19. Start temporary, End temporary
+- 세미 조인 최적화를 위해 Duplicate weed-out 전략을 사용하는 경우
+
+#### 20. Unique row not found
+- 유니크 컬럼을 아우터 조인을 할 때 조건에 맞는 레코드 없음
+
+#### 21. Using filesort
+- order by 절에 사용할 인덱스가 없어 MySQL 자체 정렬 알고리즘을 사용하게될 때
+- 정렬을 위해 소트버퍼를 사용하게 된다
+
+#### 22. Using index(커버링 인덱스)
+- 인덱스의 조합만으로 쿼리 실행이 가능한 경우
+- type 의 index (인덱스 풀 스캔) 과 구분!!
+
+#### 23. Using index condition
+- 인덱스 컨디션 푸시 다운 최적화를 사용하는 경우
+
+#### 24. Using index for group-by
+- group by 절에 인덱스를 사용하는 경우
+  - avg(), sum(), count() 를 사용한다면 인덱스를 사용하더라도 모든 범위의 값을 읽고 계산하기때문에 위 extra 항목이 표시되지 않음
+  - 타이트 인덱스 스캔
+- 루스 인덱스 스캔 방식을 사용하는 경우
+  - where 조건이 없고 select 와 group by 에서 사용 가능한 인덱스가 있을 때
+- where 조건과 group by 가 동일한 인덱스를 사용하는 경우
+  - where 이 사용할 수 있는 인덱스의 우선순위가 높다
+- where 조건에 사용 할 인덱스가 없고, group by 절에만 인덱스가 있는 경우
+  - group by 먼저 읽은 후 where 조건 비교
+  - 루스 인덱스 스캔 X
+  - 타이트 인덱스 스캔 O
+
 #### 25. Using index for skip scan
 - 인덱스 스킵 스캔 방식을 이용한 경우
 
@@ -115,7 +154,6 @@ where e2.emp_no > e1.emp_no
   - count(distinct col1) 을 포함하는 경우
   - union 또는 union distinct 쿼리 (union all 은 성능이 개선되어 임시테이블 사용 X)
   - 존재하는 인덱스로 정렬할 수 없는 경우에 정렬 레코드가 많아지면 임시 테이블을 사용하게 될 수 있음
-  - 
 
 #### 30. Using where
 - 스토리지 엔진에서 데이터를 읽은 후 MySQL 엔진에서 추가적인 데이터 가공이 있었음을 의미
