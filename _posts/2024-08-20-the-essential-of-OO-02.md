@@ -1,6 +1,6 @@
 ---
 title: 02. 이상한 나라의 객체
-description: 
+description: 객체 지향의 컨셉 이해
 date: 2024-08-20 +0900
 categories: [Study, 객체지향의 사실과 오해]
 tags: [Team Study]
